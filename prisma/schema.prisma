@@ -67,7 +67,7 @@ model Room {
 model Order {
   id     String      @id @default(uuid())
   amount Int
-  date   DateTime
+  date   DateTime    @default(now())
   status OrderStatus
   book   Book        @relation(fields: [bookId], references: [id])
   bookId String      @map("book_id")
