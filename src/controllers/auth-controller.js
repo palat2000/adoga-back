@@ -18,12 +18,12 @@ exports.register = async (req, res, next) => {
     if (isMatch) {
       return next(createError("This email is already used", 400));
     }
-    value.password = await bcrypt.hash(value.password, 14);
+    value.password = await bcrypt.hash(value.password, 15);
     const user = await prisma.user.create({
       data: value,
     });
     const token = jwt.sign(
-      { id: user.id },
+      { userId: user.id },
       process.env.SECRET_KEY || "lkshflksdhfjkh",
       {
         expiresIn: process.env.EXPIRE,
@@ -60,6 +60,36 @@ exports.login = async (req, res, next) => {
       { expiresIn: process.env.EXPIRE }
     );
     res.status(200).json({ user: foundUser, token });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.registerPlace = async (req, res, next) => {
+  try {
+    const { value, error } = registerPlaceSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+    const isMatch = await prisma.placer.findUnique({
+      where: {
+        OR: [{ email: value.email }, { mobile: value.mobile }],
+      },
+    });
+    if (isMatch) {
+      return next(createError("This mobile or email is already used", 400));
+    }
+    value.password = await bcrypt.hash(value.password, 15);
+    const placer = await prisma.placer.create({
+      data: value,
+    });
+    const token = jwt.sign(
+      { placerId: placer.id },
+      process.env.SECRET_KEY || "asdsafgdsfa",
+      { expiresIn: process.env.EXPIRE }
+    );
+    delete placer.password;
+    res.status(201).json({ token, placer });
   } catch (err) {
     next(err);
   }

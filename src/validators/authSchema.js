@@ -31,3 +31,20 @@ exports.loginSchema = Joi.object({
     then: Joi.string().default(Joi.ref("mobileOrEmail")),
   }),
 });
+
+exports.registerPlaceSchema = Joi.object({
+  name: Joi.string().trim().required(),
+  type: Joi.string().required(),
+  email: Joi.string().email().required(),
+  mobile: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .required(),
+  password: Joi.string()
+    .pattern(/^[a-zA-Z0-9]{6,30}$/)
+    .required(),
+  confirmPassword: Joi.string()
+    .valid(Joi.ref("password"))
+    .trim()
+    .required()
+    .strip(),
+});
