@@ -22,7 +22,7 @@ exports.register = async (req, res, next) => {
     if (isMatch) {
       return next(createError("This email is already used", 400));
     }
-    value.password = await bcrypt.hash(value.password, 15);
+    value.password = await bcrypt.hash(value.password, 13);
     const user = await prisma.user.create({
       data: value,
     });
@@ -91,7 +91,7 @@ exports.registerPlace = async (req, res, next) => {
     if (isMobileUsed) {
       return next(createError("mobile is already used", 400));
     }
-    value.password = await bcrypt.hash(value.password, 15);
+    value.password = await bcrypt.hash(value.password, 13);
     const placer = await prisma.placer.create({
       data: value,
     });
@@ -101,7 +101,7 @@ exports.registerPlace = async (req, res, next) => {
       { expiresIn: process.env.EXPIRE }
     );
     delete placer.password;
-    res.status(201).json({ token, user });
+    res.status(201).json({ token, user: placer });
   } catch (err) {
     next(err);
   }
