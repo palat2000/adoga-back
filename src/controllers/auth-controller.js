@@ -142,7 +142,6 @@ exports.getMe = (req, res, next) => {
     return res.status(200).json({ user: req.user });
   }
   if (req.placer) {
-    console.log({ user: req.placer, isPlacer: true });
     return res.status(200).json({ user: { ...req.placer, isPlacer: true } });
   }
   next(createError("Error", 400));

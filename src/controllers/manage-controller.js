@@ -80,3 +80,22 @@ exports.changePlacePassword = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getMyRooms = async (req, res, next) => {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: {
+        placerId: req.placer.id,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    if (!rooms) {
+      return next(createError("not found rooms", 400));
+    }
+    res.status(200).json({ rooms });
+  } catch (err) {
+    next(err);
+  }
+};

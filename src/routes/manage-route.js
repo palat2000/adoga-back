@@ -5,6 +5,12 @@ const manageController = require("../controllers/manage-controller");
 
 const router = express.Router();
 
+router.get(
+  "/my-rooms",
+  authenMiddleware,
+  isPlacerMiddleware,
+  manageController.getMyRooms
+);
 router.post(
   "/create-room",
   authenMiddleware,
