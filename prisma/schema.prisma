@@ -50,15 +50,16 @@ model Book {
 }
 
 model Room {
-  id                  String @id @default(uuid())
-  totalRoomCount      Int    @map("total_room_count")
+  id                  String  @id @default(uuid())
+  totalRoomCount      Int     @map("total_room_count")
   remaining           Int
   name                String
   price               Int
-  maximumNumberPeople Int    @map("maximum_number_people")
+  maximumNumberPeople Int     @map("maximum_number_people")
   desc                String
-  placer              Placer @relation(fields: [placerId], references: [id])
-  placerId            String @map("placer_id")
+  placer              Placer  @relation(fields: [placerId], references: [id])
+  placerId            String  @map("placer_id")
+  images              Image[]
 }
 
 model Order {
@@ -68,6 +69,13 @@ model Order {
   status OrderStatus
   book   Book        @relation(fields: [bookId], references: [id])
   bookId String      @map("book_id")
+}
+
+model Image {
+  id     String @id @default(uuid())
+  image  String
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
 }
 
 enum OrderStatus {

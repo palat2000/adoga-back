@@ -20,8 +20,10 @@ exports.loginSchema = Joi.object({
     Joi.string().email(),
     Joi.string().pattern(/^[0-9]{10}$/),
   ]).strip(),
-  password: Joi.string().required(),
-  confirmPassword: Joi.ref("password"),
+  password: Joi.string()
+    .pattern(/^[a-zA-Z0-9]{6,30}$/)
+    .trim()
+    .required(),
   mobile: Joi.forbidden().when("mobileOrEmail", {
     is: Joi.string().pattern(/^[0-9]{10}$/),
     then: Joi.string().default(Joi.ref("mobileOrEmail")),

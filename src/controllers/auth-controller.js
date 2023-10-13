@@ -101,7 +101,7 @@ exports.registerPlace = async (req, res, next) => {
       { expiresIn: process.env.EXPIRE }
     );
     delete placer.password;
-    res.status(201).json({ token, user: placer });
+    res.status(201).json({ token, user: { ...placer, isPlacer: true } });
   } catch (err) {
     next(err);
   }
@@ -131,7 +131,7 @@ exports.loginPlace = async (req, res, next) => {
       { expiresIn: process.env.EXPIRE }
     );
     delete foundPlacer.password;
-    res.status(200).json({ token, user: foundPlacer });
+    res.status(200).json({ token, user: { ...foundPlacer, isPlacer: true } });
   } catch (err) {
     next(err);
   }
@@ -140,6 +140,10 @@ exports.loginPlace = async (req, res, next) => {
 exports.getMe = (req, res, next) => {
   if (req.user) {
     return res.status(200).json({ user: req.user });
+  }
+  if (req.placer) {
+    console.log({ user: req.placer, isPlacer: true });
+    return res.status(200).json({ user: { ...req.placer, isPlacer: true } });
   }
   next(createError("Error", 400));
 };

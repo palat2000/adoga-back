@@ -11,5 +11,17 @@ router.post(
   isPlacerMiddleware,
   manageController.createRoom
 );
+router.patch(
+  "/update-room/:roomId",
+  authenMiddleware,
+  isPlacerMiddleware,
+  manageController.updateRoom
+);
+router.patch(
+  "/change-password/place",
+  authenMiddleware,
+  isPlacerMiddleware,
+  manageController.changePlacePassword
+);
 
 module.exports = router;
