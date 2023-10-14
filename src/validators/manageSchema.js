@@ -1,12 +1,15 @@
 const Joi = require("joi");
 
 exports.roomSchema = Joi.object({
+  id: Joi.string(),
+  placerId: Joi.string(),
   maximumNumberPeople: Joi.number().required(),
   name: Joi.string().required(),
   desc: Joi.string().required(),
+  remaining: Joi.number(),
   price: Joi.number().required(),
   totalRoomCount: Joi.number().required(),
-});
+}).options({ allowUnknown: true });
 
 exports.changePasswordSchema = Joi.object({
   password: Joi.string()

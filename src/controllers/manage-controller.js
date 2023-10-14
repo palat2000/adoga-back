@@ -28,6 +28,10 @@ exports.createRoom = async (req, res, next) => {
 
 exports.updateRoom = async (req, res, next) => {
   try {
+    const { value, error } = roomSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
     const foundPlacer = await prisma.placer.findUnique({
       where: {
         id: req.placer.id,
@@ -40,7 +44,7 @@ exports.updateRoom = async (req, res, next) => {
       where: {
         id: req.params.roomId,
       },
-      data: req.body,
+      data: value,
     });
     res.status(200).json({ message: "OK" });
   } catch (err) {
