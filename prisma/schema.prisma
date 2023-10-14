@@ -18,15 +18,16 @@ model User {
 }
 
 model Placer {
-  id       String    @id @default(uuid())
-  name     String    @unique
-  type     TypePlace
-  email    String?   @unique
-  mobile   String?   @unique
-  password String
-  lat      Decimal?
-  lng      Decimal?
-  rooms    Room[]
+  id          String       @id @default(uuid())
+  name        String       @unique
+  type        TypePlace
+  email       String?      @unique
+  mobile      String?      @unique
+  password    String
+  lat         Decimal?
+  lng         Decimal?
+  rooms       Room[]
+  imagePlaces ImagePlace[]
 }
 
 model Customer {
@@ -50,16 +51,16 @@ model Book {
 }
 
 model Room {
-  id                  String  @id @default(uuid())
-  totalRoomCount      Int     @map("total_room_count")
+  id                  String      @id @default(uuid())
+  totalRoomCount      Int         @map("total_room_count")
   remaining           Int
   name                String
   price               Int
-  maximumNumberPeople Int     @map("maximum_number_people")
+  maximumNumberPeople Int         @map("maximum_number_people")
   desc                String
-  placer              Placer  @relation(fields: [placerId], references: [id])
-  placerId            String  @map("placer_id")
-  images              Image[]
+  placer              Placer      @relation(fields: [placerId], references: [id])
+  placerId            String      @map("placer_id")
+  images              ImageRoom[]
 }
 
 model Order {
@@ -71,11 +72,22 @@ model Order {
   bookId String      @map("book_id")
 }
 
-model Image {
+model ImageRoom {
   id     String @id @default(uuid())
   image  String
   room   Room   @relation(fields: [roomId], references: [id])
-  roomId String
+  roomId String @map("room_id")
+
+  @@map("image_room")
+}
+
+model ImagePlace {
+  id       String @id @default(uuid())
+  image    String
+  place    Placer @relation(fields: [placerId], references: [id])
+  placerId String @map("placer_id")
+
+  @@map("image_place")
 }
 
 enum OrderStatus {

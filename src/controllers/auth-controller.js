@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {
@@ -5,8 +6,10 @@ const {
   loginSchema,
   registerPlaceSchema,
 } = require("../validators/authSchema");
+const cloudinary = require("../config/cloudinary");
 const prisma = require("../model/prisma");
 const createError = require("../utils/create-error");
+const { upload } = require("../utils/cloundinary-service");
 
 exports.register = async (req, res, next) => {
   try {
@@ -75,6 +78,9 @@ exports.registerPlace = async (req, res, next) => {
     if (error) {
       return next(error);
     }
+    if (!req.files) {
+      return next(createError("image not found", 400));
+    }
     const isEmailUsed = await prisma.placer.findUnique({
       where: {
         email: value.email,
@@ -95,13 +101,23 @@ exports.registerPlace = async (req, res, next) => {
     const placer = await prisma.placer.create({
       data: value,
     });
+    const imagePlace = await upload(req.files.imagePlace[0].path);
+    await prisma.imagePlace.create({
+      data: {
+        image: imagePlace,
+        placerId: placer.id,
+      },
+    });
+    await fs.unlink(req.files.imagePlace[0].path);
     const token = jwt.sign(
       { placerId: placer.id },
       process.env.SECRET_KEY || "asdsafgdsfa",
       { expiresIn: process.env.EXPIRE }
     );
     delete placer.password;
-    res.status(201).json({ token, user: { ...placer, isPlacer: true } });
+    res
+      .status(201)
+      .json({ token, user: { ...placer, isPlacer: true, imagePlace } });
   } catch (err) {
     next(err);
   }
@@ -116,6 +132,13 @@ exports.loginPlace = async (req, res, next) => {
     const foundPlacer = await prisma.placer.findFirst({
       where: {
         OR: [{ email: value.email }, { mobile: value.mobile }],
+      },
+      include: {
+        imagePlaces: {
+          select: {
+            image: true,
+          },
+        },
       },
     });
     if (!foundPlacer) {

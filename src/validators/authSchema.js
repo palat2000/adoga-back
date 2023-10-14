@@ -51,4 +51,4 @@ exports.registerPlaceSchema = Joi.object({
     .strip(),
   lat: Joi.number().required(),
   lng: Joi.number().required(),
-});
+}).options({ allowUnknown: true });
