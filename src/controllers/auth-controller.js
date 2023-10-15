@@ -108,7 +108,6 @@ exports.registerPlace = async (req, res, next) => {
         placerId: placer.id,
       },
     });
-    await fs.unlink(req.files.imagePlace[0].path);
     const token = jwt.sign(
       { placerId: placer.id },
       process.env.SECRET_KEY || "asdsafgdsfa",
@@ -120,6 +119,10 @@ exports.registerPlace = async (req, res, next) => {
       .json({ token, user: { ...placer, isPlacer: true, imagePlace } });
   } catch (err) {
     next(err);
+  } finally {
+    if (req.files) {
+      fs.unlink(req.files.imagePlace[0].path);
+    }
   }
 };
 
