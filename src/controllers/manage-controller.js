@@ -4,6 +4,8 @@ const createError = require("../utils/create-error");
 const {
   roomSchema,
   changePasswordSchema,
+  mobileSchema,
+  profile,
 } = require("../validators/manageSchema");
 
 exports.createRoom = async (req, res, next) => {
@@ -80,6 +82,100 @@ exports.changePlacePassword = async (req, res, next) => {
       },
     });
     res.status(200).json({ message: "changed password" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.changeUserPassword = async (req, res, next) => {
+  try {
+    const { value, error } = changePasswordSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+    const foundUser = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!foundUser) {
+      return next(createError("user not found", 400));
+    }
+    const isMatch = await bcrypt.compare(value.password, foundUser.password);
+    if (!isMatch) {
+      return next(createError("cannot change password", 400));
+    }
+    const hashed = await bcrypt.hash(value.newPassword, 13);
+    await prisma.user.update({
+      data: {
+        password: hashed,
+      },
+      where: {
+        id: foundUser.id,
+      },
+    });
+    res.status(200).json({ message: "changed password" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addMobile = async (req, res, next) => {
+  try {
+    console.log(req.body);
+    const { value, error } = mobileSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+    const foundUser = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!foundUser) {
+      return next(createError("user not found", 400));
+    }
+    const isUsed = await prisma.user.findUnique({
+      where: {
+        mobile: value.mobile,
+      },
+    });
+    if (isUsed) {
+      return next(createError("mobile is already used", 400));
+    }
+    await prisma.user.update({
+      data: value,
+      where: {
+        id: foundUser.id,
+      },
+    });
+    res.status(200).json({ message: "add mobile" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.editProfile = async (req, res, next) => {
+  try {
+    const { value, error } = profile.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+    const foundUser = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!foundUser) {
+      return createError("user not found", 400);
+    }
+    await prisma.user.update({
+      data: value,
+      where: {
+        id: foundUser.id,
+      },
+    });
+    res.status(200).json({ message: "updated" });
   } catch (err) {
     next(err);
   }

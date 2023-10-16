@@ -26,3 +26,14 @@ exports.changePasswordSchema = Joi.object({
     .required()
     .strip(),
 });
+
+exports.mobileSchema = Joi.object({
+  mobile: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .required(),
+});
+
+exports.profile = Joi.object({
+  firstName: Joi.string().required().trim(),
+  lastName: Joi.string().required().trim(),
+});

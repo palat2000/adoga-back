@@ -29,5 +29,12 @@ router.patch(
   isPlacerMiddleware,
   manageController.changePlacePassword
 );
+router.patch(
+  "/change-password/user",
+  authenMiddleware,
+  manageController.changeUserPassword
+);
+router.patch("/add-mobile", authenMiddleware, manageController.addMobile);
+router.patch("/edit-profile", authenMiddleware, manageController.editProfile);
 
 module.exports = router;
