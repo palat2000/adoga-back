@@ -4,9 +4,8 @@ const createError = require("../utils/create-error");
 exports.getPlace = async (req, res, next) => {
   try {
     const { type } = req.body;
-    let places;
     if (req.body.type) {
-      places = await prisma.placer.findMany({
+      const places = await prisma.placer.findMany({
         where: {
           type,
         },
@@ -19,24 +18,43 @@ exports.getPlace = async (req, res, next) => {
           mobile: true,
           name: true,
           type: true,
+          rooms: true,
         },
       });
-    } else {
-      places = await prisma.placer.findMany({
-        select: {
-          email: true,
-          id: true,
-          imagePlaces: true,
-          lat: true,
-          lng: true,
-          mobile: true,
-          name: true,
-          type: true,
-        },
-      });
+      return res.status(200).json({ places });
     }
-    console.log(places);
-    res.status(200).json({ places });
+    const places = await prisma.placer.findMany({
+      select: {
+        email: true,
+        id: true,
+        imagePlaces: true,
+        lat: true,
+        lng: true,
+        mobile: true,
+        name: true,
+        type: true,
+        rooms: true,
+      },
+    });
+    const placesInFilter = places.filter((el) => {
+      let result = false;
+      if (!el.rooms?.length) {
+        return false;
+      }
+      for (let room of el.rooms) {
+        if (
+          room.price >= req.body.minPrice &&
+          room.price <= req.body.maxPrice &&
+          room.maximumNumberPeople >= req.body.people &&
+          room.remaining >= req.body.room
+        ) {
+          result = true;
+        }
+      }
+      return result;
+    });
+    console.log(placesInFilter);
+    res.status(200).json({ places: placesInFilter });
   } catch (err) {
     next(err);
   }
