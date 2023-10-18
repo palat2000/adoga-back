@@ -117,6 +117,7 @@ exports.getPlaceById = async (req, res, next) => {
         rooms: {
           include: {
             books: true,
+            images: true,
           },
         },
       },

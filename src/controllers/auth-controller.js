@@ -17,13 +17,59 @@ exports.register = async (req, res, next) => {
     if (error) {
       return next(error);
     }
-    const isMatch = await prisma.user.findFirst({
+    const isEmailUsed = await prisma.user.findUnique({
       where: {
         email: value.email,
       },
     });
-    if (isMatch) {
+    if (isEmailUsed) {
       return next(createError("This email is already used", 400));
+    }
+    const customer = await prisma.customer.findFirst({
+      where: {
+        email: value.email,
+        firstName: value.firstName,
+        lastName: value.lastName,
+      },
+    });
+    if (customer) {
+      const isMobileUsed = await prisma.user.findUnique({
+        where: {
+          mobile: customer.mobile,
+        },
+      });
+      if (isMobileUsed) {
+        delete customer.mobile;
+      }
+      const hashed = await bcrypt.hash(value.password, 13);
+      const user = await prisma.user.create({
+        data: {
+          ...customer,
+          password: hashed,
+        },
+      });
+      await prisma.book.updateMany({
+        where: {
+          customerId: customer.id,
+        },
+        data: {
+          userId: user.id,
+        },
+      });
+      await prisma.customer.delete({
+        where: {
+          id: customer.id,
+        },
+      });
+      const token = jwt.sign(
+        { userId: user.id },
+        process.env.SECRET_KEY || "lkshflksdhfjkh",
+        {
+          expiresIn: process.env.EXPIRE,
+        }
+      );
+      delete user.password;
+      return res.status(201).json({ token, user });
     }
     value.password = await bcrypt.hash(value.password, 13);
     const user = await prisma.user.create({
