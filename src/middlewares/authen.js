@@ -6,7 +6,9 @@ module.exports = async (req, res, next) => {
   try {
     const authorization = req.headers.authorization;
     if (!authorization || !authorization.startsWith("Bearer ")) {
-      return next(createError("unauthenticated", 401));
+      req.customer = req.body.customer;
+      req.body = req.body.data;
+      return next();
     }
     const [, token] = authorization.split(" ");
     const payload = jwt.verify(token, process.env.SECRET_KEY || "sdfghjk");

@@ -3,6 +3,7 @@ const searchController = require("../controllers/search-controller");
 const router = express.Router();
 
 router.post("/", searchController.getPlace);
-router.get("/place/:placeId", searchController.getPlaceById);
+router.post("/place/:placeId", searchController.getPlaceById);
+router.get("/room/:roomId", searchController.getRoomById);
 
 module.exports = router;

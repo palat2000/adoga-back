@@ -2,6 +2,7 @@ const express = require("express");
 const authenMiddleware = require("../middlewares/authen");
 const isPlacerMiddleware = require("../middlewares/is-placer");
 const manageController = require("../controllers/manage-controller");
+const uploadMiddleware = require("../middlewares/upload");
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.post(
   "/create-room",
   authenMiddleware,
   isPlacerMiddleware,
+  uploadMiddleware.fields([{ name: "imageRoom", maxCount: 1 }]),
   manageController.createRoom
 );
 router.patch(

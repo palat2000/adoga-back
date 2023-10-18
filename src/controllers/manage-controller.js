@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const bcrypt = require("bcryptjs");
 const prisma = require("../model/prisma");
 const createError = require("../utils/create-error");
@@ -7,6 +8,7 @@ const {
   mobileSchema,
   profile,
 } = require("../validators/manageSchema");
+const { upload } = require("../utils/cloundinary-service");
 
 exports.createRoom = async (req, res, next) => {
   try {
@@ -14,6 +16,10 @@ exports.createRoom = async (req, res, next) => {
     if (error) {
       return next(error);
     }
+    if (!req.files) {
+      return next(createError("not found image", 400));
+    }
+    const imageRoom = await upload(req.files.imageRoom[0].path);
     const data = {
       ...value,
       remaining: value.totalRoomCount,
@@ -22,9 +28,19 @@ exports.createRoom = async (req, res, next) => {
     const room = await prisma.room.create({
       data,
     });
-    res.status(200).json({ room });
+    await prisma.imageRoom.create({
+      data: {
+        image: imageRoom,
+        roomId: room.id,
+      },
+    });
+    res.status(200).json({ room: { ...room, images: [{ image: imageRoom }] } });
   } catch (err) {
     next(err);
+  } finally {
+    if (req.files) {
+      fs.unlink(req.files.imageRoom[0].path);
+    }
   }
 };
 
@@ -186,6 +202,9 @@ exports.getMyRooms = async (req, res, next) => {
     const rooms = await prisma.room.findMany({
       where: {
         placerId: req.placer.id,
+      },
+      include: {
+        images: true,
       },
       orderBy: {
         name: "asc",

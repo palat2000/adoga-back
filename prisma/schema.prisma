@@ -34,8 +34,8 @@ model Customer {
   id        String @id @default(uuid())
   firstName String @map("first_name")
   lastName  String @map("last_name")
-  email     String
-  mobile    String
+  email     String @unique
+  mobile    String @unique
   books     Book[]
 }
 
