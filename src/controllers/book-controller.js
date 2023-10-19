@@ -3,37 +3,31 @@ const createError = require("../utils/create-error");
 
 exports.booking = async (req, res, next) => {
   try {
-    // console.log(req.customer);
-    // console.log(req.body);
-    // const books = await prisma.book.findMany({
-    //   where: {
-    //     roomId: req.params.roomId,
-    //   },
-    // });
-    // const result = books.filter((book) => {
-    //   const bookStartDate = new Date(book.fromDate).getTime();
-    //   const bookEndDate = new Date(book.toDate).getTime();
-    //   const startDate = new Date(req.body.start).getTime();
-    //   const endDate = new Date(req.body.end).getTime();
-    //   if (startDate >= bookStartDate && startDate <= bookEndDate) {
-    //     return true;
-    //   }
-    //   if (endDate >= bookStartDate && endDate <= bookEndDate) {
-    //     return true;
-    //   }
-    // });
-    // if (result.length) {
-    //   return next(createError("date already book", 400));
-    // }
     const room = await prisma.room.findUnique({
       where: {
         id: req.params.roomId,
       },
+      include: {
+        books: true,
+      },
     });
-    if (!room.remaining >= req.body.room) {
+    const bookCount = room.books.reduce((acc, book) => {
+      const bookStart = new Date(book.fromDate);
+      const bookEnd = new Date(book.toDate);
+      const startNew = new Date(req.body.start);
+      const endNew = new Date(req.body.end);
+      if (
+        (startNew >= bookStart && startNew < bookEnd) ||
+        (endNew > bookStart && endNew <= bookEnd)
+      ) {
+        acc += 1;
+      }
+      return acc;
+    }, 0);
+    const remaining = room.totalRoomCount - bookCount;
+    if (remaining === 0 || remaining < req.body.room) {
       res.status(200).json({ message: "full" });
     }
-    const customer = await prisma.customer.find;
     if (req.user) {
       await prisma.book.create({
         data: {
@@ -41,6 +35,7 @@ exports.booking = async (req, res, next) => {
           toDate: new Date(req.body.end),
           userId: req.user.id,
           roomId: req.params.roomId,
+          amountRoom: req.body.room,
           orders: {
             create: {
               amount: req.body.amount,
@@ -49,34 +44,47 @@ exports.booking = async (req, res, next) => {
           },
         },
       });
-
-      const room = await prisma.room.findUnique({
-        where: {
-          id: req.params.roomId,
-        },
-      });
-      await prisma.room.update({
-        where: {
-          id: req.params.roomId,
-        },
-        data: {
-          remaining: room.remaining - req.body.room,
-        },
-      });
+      // const room = await prisma.room.findUnique({
+      //   where: {
+      //     id: req.params.roomId,
+      //   },
+      // });
+      // await prisma.room.update({
+      //   where: {
+      //     id: req.params.roomId,
+      //   },
+      //   data: {
+      //     remaining: room.remaining - req.body.room,
+      //   },
+      // });
     } else {
-      const customer = await prisma.customer.create({
-        data: {
+      let customer;
+      const found = await prisma.customer.findFirst({
+        where: {
           firstName: req.customer.firstName,
           lastName: req.customer.lastName,
           email: req.customer.email,
           mobile: req.customer.mobile,
         },
       });
+      if (found) {
+        customer = found;
+      } else {
+        customer = await prisma.customer.create({
+          data: {
+            firstName: req.customer.firstName,
+            lastName: req.customer.lastName,
+            email: req.customer.email,
+            mobile: req.customer.mobile,
+          },
+        });
+      }
       await prisma.book.create({
         data: {
           fromDate: new Date(req.body.start),
           toDate: new Date(req.body.end),
           roomId: req.params.roomId,
+          amountRoom: req.body.room,
           orders: {
             create: {
               amount: req.body.amount,
@@ -86,20 +94,19 @@ exports.booking = async (req, res, next) => {
           customerId: customer.id,
         },
       });
-
-      const room = await prisma.room.findUnique({
-        where: {
-          id: req.params.roomId,
-        },
-      });
-      await prisma.room.update({
-        where: {
-          id: req.params.roomId,
-        },
-        data: {
-          remaining: room.remaining - req.body.room,
-        },
-      });
+      // const room = await prisma.room.findUnique({
+      //   where: {
+      //     id: req.params.roomId,
+      //   },
+      // });
+      // await prisma.room.update({
+      //   where: {
+      //     id: req.params.roomId,
+      //   },
+      //   data: {
+      //     remaining: room.remaining - req.body.room,
+      //   },
+      // });
     }
     res.status(200).json({ message: "OK" });
   } catch (err) {

@@ -22,7 +22,6 @@ exports.createRoom = async (req, res, next) => {
     const imageRoom = await upload(req.files.imageRoom[0].path);
     const data = {
       ...value,
-      remaining: value.totalRoomCount,
       placerId: req.placer.id,
     };
     const room = await prisma.room.create({
@@ -138,7 +137,6 @@ exports.changeUserPassword = async (req, res, next) => {
 
 exports.addMobile = async (req, res, next) => {
   try {
-    console.log(req.body);
     const { value, error } = mobileSchema.validate(req.body);
     if (error) {
       return next(error);
@@ -210,10 +208,94 @@ exports.getMyRooms = async (req, res, next) => {
         name: "asc",
       },
     });
-    if (!rooms) {
-      return next(createError("not found rooms", 400));
-    }
     res.status(200).json({ rooms });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getMyBooking = async (req, res, next) => {
+  try {
+    const allBooking = await prisma.book.findMany({
+      where: {
+        userId: req.user.id,
+      },
+      include: {
+        room: {
+          include: {
+            placer: {
+              select: {
+                name: true,
+              },
+            },
+            images: true,
+          },
+        },
+      },
+    });
+    res.status(200).json({ allBooking });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getPlaceBooking = async (req, res, next) => {
+  try {
+    const placeBooking = await prisma.room.findMany({
+      where: {
+        placerId: req.placer.id,
+      },
+      include: {
+        books: {
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+            customer: true,
+          },
+        },
+        images: true,
+      },
+    });
+    res.status(200).json({ placeBooking });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.cancelBooking = async (req, res, next) => {
+  try {
+    const existBook = await prisma.book.findUnique({
+      where: {
+        id: req.params.bookId,
+      },
+    });
+    if (!existBook) {
+      return next(createError("booking not found", 400));
+    }
+    const existOrder = await prisma.order.findFirst({
+      where: {
+        bookId: existBook.id,
+      },
+    });
+    if (!existBook) {
+      return next(createError("order not found", 400));
+    }
+    await prisma.order.delete({
+      where: {
+        id: existOrder.id,
+      },
+    });
+    await prisma.book.delete({
+      where: {
+        id: existBook.id,
+      },
+    });
+    res.status(200).json({ message: "Deleted" });
   } catch (err) {
     next(err);
   }

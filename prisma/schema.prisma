@@ -43,6 +43,7 @@ model Book {
   id         String    @id @default(uuid())
   fromDate   DateTime  @map("from_date")
   toDate     DateTime  @map("to_date")
+  amountRoom Int?      @map("amount_room")
   customer   Customer? @relation(fields: [customerId], references: [id])
   customerId String?   @map("customer_id")
   user       User?     @relation(fields: [userId], references: [id])
@@ -55,7 +56,6 @@ model Book {
 model Room {
   id                  String      @id @default(uuid())
   totalRoomCount      Int         @map("total_room_count")
-  remaining           Int
   name                String
   price               Int
   maximumNumberPeople Int         @map("maximum_number_people")

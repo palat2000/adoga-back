@@ -38,5 +38,16 @@ router.patch(
 );
 router.patch("/add-mobile", authenMiddleware, manageController.addMobile);
 router.patch("/edit-profile", authenMiddleware, manageController.editProfile);
+router.get("/my-booking", authenMiddleware, manageController.getMyBooking);
+router.get(
+  "/place-booking",
+  authenMiddleware,
+  manageController.getPlaceBooking
+);
+router.delete(
+  "/cancel/:bookId",
+  authenMiddleware,
+  manageController.cancelBooking
+);
 
 module.exports = router;

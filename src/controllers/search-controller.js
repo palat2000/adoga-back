@@ -53,46 +53,50 @@ exports.getPlace = async (req, res, next) => {
         },
       });
     }
-    const placesInFilter = places.filter((el) => {
+    const placesInFilter = places.filter((place) => {
       let result = false;
-      if (!el.rooms?.length) {
+      if (!place.rooms?.length) {
         return false;
       }
-      for (let room of el.rooms) {
+      for (let room of place.rooms) {
         if (
           room.price >= req.body.minPrice &&
           room.price <= req.body.maxPrice &&
-          room.maximumNumberPeople >= req.body.people &&
-          room.remaining >= req.body.room
+          room.maximumNumberPeople >= req.body.people
         ) {
           result = true;
         }
       }
       return result;
     });
-    const placesNotBook = placesInFilter.filter((place) => {
-      let result = true;
-      place.rooms.forEach((room) => {
+    const placesNotFullBook = placesInFilter.reduce((allPlace, place) => {
+      const freeRoom = place.rooms.reduce((allRoom, room) => {
+        const bookCount = room.books.reduce((acc, book) => {
+          const bookStart = new Date(book.fromDate);
+          const bookEnd = new Date(book.toDate);
+          const startNew = new Date(req.body.start);
+          const endNew = new Date(req.body.end);
+          if (
+            (startNew >= bookStart && startNew < bookEnd) ||
+            (endNew > bookStart && endNew <= bookEnd)
+          ) {
+            acc += book.amountRoom;
+          }
+          return acc;
+        }, 0);
+        room.remaining = room.totalRoomCount - bookCount;
         if (room.remaining >= req.body.room) {
-          return true;
+          allRoom.push(room);
         }
-        room.books.forEach((book) => {
-          const bookStartDate = new Date(book.fromDate).getTime();
-          const bookEndDate = new Date(book.toDate).getTime();
-          const startDate = new Date(req.body.start).getTime();
-          const endDate = new Date(req.body.end).getTime();
-          if (startDate >= bookStartDate && startDate <= bookEndDate) {
-            result = false;
-          }
-          if (endDate >= bookStartDate && endDate <= bookEndDate) {
-            result = false;
-          }
-        });
-      });
-      return result;
-    });
-    // console.log(placesNotBook);
-    res.status(200).json({ places: placesNotBook });
+        return allRoom;
+      }, []);
+      place.rooms = freeRoom;
+      if (place.rooms.length) {
+        allPlace.push(place);
+      }
+      return allPlace;
+    }, []);
+    res.status(200).json({ places: placesNotFullBook });
   } catch (err) {
     next(err);
   }
@@ -125,31 +129,30 @@ exports.getPlaceById = async (req, res, next) => {
     if (!place) {
       return next(createError("not found", 400));
     }
-    const filterRoom = place.rooms.filter((room) => {
+    const filterRoom = place.rooms.reduce((acc, room) => {
+      let count = 0;
+      room.books.forEach((book) => {
+        const bookStart = new Date(book.fromDate);
+        const bookEnd = new Date(book.toDate);
+        const startNew = new Date(req.body.start);
+        const endNew = new Date(req.body.end);
+        if (
+          (startNew >= bookStart && startNew < bookEnd) ||
+          (endNew > bookStart && endNew <= bookEnd)
+        ) {
+          count += book.amountRoom;
+        }
+      });
+      room.remaining = room.totalRoomCount - count;
       if (
+        room.remaining !== 0 &&
         room.remaining >= req.body.room &&
         room.maximumNumberPeople >= req.body.people
       ) {
-        return true;
+        acc.push(room);
       }
-      let result = true;
-      room.books.forEach((book) => {
-        const bookStartDate = new Date(book.fromDate).getTime();
-        const bookEndDate = new Date(book.toDate).getTime();
-        const startDate = new Date(req.body.start).getTime();
-        const endDate = new Date(req.body.end).getTime();
-        if (startDate >= bookStartDate && startDate <= bookEndDate) {
-          result = false;
-        }
-        if (endDate >= bookStartDate && endDate <= bookEndDate) {
-          result = false;
-        }
-      });
-      if (!result) {
-        return result;
-      }
-    });
-    // console.log(filterRoom);
+      return acc;
+    }, []);
     place.rooms = filterRoom;
     res.status(200).json({ place });
   } catch (err) {
