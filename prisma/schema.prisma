@@ -24,8 +24,9 @@ model Placer {
   email       String?      @unique
   mobile      String?      @unique
   password    String
-  lat         Decimal?
-  lng         Decimal?
+  lat         Decimal
+  lng         Decimal
+  province    String
   rooms       Room[]
   imagePlaces ImagePlace[]
 }

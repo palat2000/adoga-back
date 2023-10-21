@@ -22,6 +22,34 @@ exports.getPlace = async (req, res, next) => {
           mobile: true,
           name: true,
           type: true,
+          province: true,
+          rooms: {
+            include: {
+              books: true,
+            },
+          },
+        },
+      });
+    } else if (req.body.province) {
+      places = await prisma.placer.findMany({
+        where: {
+          province: {
+            contains: req.body.province || "",
+          },
+          name: {
+            contains: req.body.search || "",
+          },
+        },
+        select: {
+          email: true,
+          id: true,
+          imagePlaces: true,
+          lat: true,
+          lng: true,
+          mobile: true,
+          name: true,
+          type: true,
+          province: true,
           rooms: {
             include: {
               books: true,
@@ -45,6 +73,7 @@ exports.getPlace = async (req, res, next) => {
           mobile: true,
           name: true,
           type: true,
+          province: true,
           rooms: {
             include: {
               books: true,
@@ -118,6 +147,7 @@ exports.getPlaceById = async (req, res, next) => {
         mobile: true,
         name: true,
         type: true,
+        province: true,
         rooms: {
           include: {
             books: true,

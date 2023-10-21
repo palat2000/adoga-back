@@ -49,6 +49,7 @@ exports.registerPlaceSchema = Joi.object({
     .trim()
     .required()
     .strip(),
+  province: Joi.string().required(),
   lat: Joi.number().required(),
   lng: Joi.number().required(),
-}).options({ allowUnknown: true });
+});
