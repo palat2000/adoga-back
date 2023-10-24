@@ -26,7 +26,7 @@ exports.booking = async (req, res, next) => {
     }, 0);
     const remaining = room.totalRoomCount - bookCount;
     if (remaining === 0 || remaining < req.body.room) {
-      res.status(200).json({ message: "full" });
+      return res.status(200).json({ message: "full" });
     }
     if (req.user) {
       await prisma.book.create({
